@@ -3,6 +3,8 @@
 #include "mbox.h"
 #include "framebf.h"
 #include "image.h"
+#include "video.h"
+#include "timer.h"
 
 #define MAX_CMD_SIZE 100
 #define MAX_TOKENS 100
@@ -24,6 +26,17 @@ void draw_image()
             // Printing each pixel in correct order of the array and lines, columns.
             drawPixelARGB32(i, j, image[j * 307 + i]);
         }
+    }
+}
+
+void draw_video() {
+    for (int a = 0; a < epd_bitmap_allArray_LEN; a++) {
+        for (int j = 0; j < 240; j++) {
+            for (int i = 0; i < 426; i++) {
+                drawPixelARGB32(i, j, epd_bitmap_allArray[a][j * 426 + i]);
+            }
+        }
+        wait_msec(40000);
     }
 }
 
@@ -529,8 +542,11 @@ void main(){
     // drawRectARGB32(200,200,400,400,0x000000CC,1); //BLUE
     // drawRectARGB32(250,250,400,400,0x00FFFF00,1); //YELLOW
     // drawPixelARGB32(300, 300, 0x00FF0000); //RED
-    draw_image();
+    // draw_image();
     
+    while (1) {
+        draw_video();
+    }
 
 	uart_init();
     uart_puts("\033[31m");
