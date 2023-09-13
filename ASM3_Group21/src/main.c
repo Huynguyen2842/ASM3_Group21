@@ -2,6 +2,7 @@
 #include "printf.h"
 #include "mbox.h"
 #include "framebf.h"
+#include "image.h"
 
 #define MAX_CMD_SIZE 100
 #define MAX_TOKENS 100
@@ -10,6 +11,21 @@
 char history[HISTORY_SIZE][MAX_CMD_SIZE];
 int history_count = 0;
 int current_history_index = 0;
+
+// Function draw image
+void draw_image()
+{
+    // Looping through image array line by line.
+    for (int j = 0; j < 425; j++)
+    {
+        // Looping through image array pixel by pixel of line j.
+        for (int i = 0; i < 307; i++)
+        {
+            // Printing each pixel in correct order of the array and lines, columns.
+            drawPixelARGB32(i, j, image[j * 307 + i]);
+        }
+    }
+}
 
 const char *commands[] = {
     "help", "clear", "setcolor", "showinfo"
@@ -494,25 +510,27 @@ void getARMclockrate(){
     uart_puts("\n");
 }
 
-void SetPhyWHFrame(){
-    unsigned int *physize = 0; // Pointer to response data
-    mbox_buffer_setup(ADDR(mBuf), MBOX_TAG_SETPHYWH, &physize, 8, 8, 500, 500);
-    mbox_call(ADDR(mBuf), MBOX_CH_PROP);
-    uart_puts("Got Actual Physical Width: ");
-    uart_dec(physize[0]); 
-    uart_puts("\nGot Actual Physical Height: ");
-    uart_dec(physize[1]);
-    uart_puts("\n");
-}
+// void SetPhyWHFrame(){
+//     unsigned int *physize = 0; // Pointer to response data
+//     mbox_buffer_setup(ADDR(mBuf), MBOX_TAG_SETPHYWH, &physize, 8, 8, 1024, 768);
+//     mbox_call(ADDR(mBuf), MBOX_CH_PROP);
+//     uart_puts("Got Actual Physical Width: ");
+//     uart_dec(physize[0]); 
+//     uart_puts("\nGot Actual Physical Height: ");
+//     uart_dec(physize[1]);
+//     uart_puts("\n");
+// }
 
 void main(){
     // set up serial console
     framebf_init();
-    drawRectARGB32(100,100,400,400,0x00AA0000,1); //RED
-    drawRectARGB32(150,150,400,400,0x0000BB00,1); //GREEN
-    drawRectARGB32(200,200,400,400,0x000000CC,1); //BLUE
-    drawRectARGB32(250,250,400,400,0x00FFFF00,1); //YELLOW
-    drawPixelARGB32(300, 300, 0x00FF0000); //RED
+    // drawRectARGB32(100,100,400,400,0x00AA0000,1); //RED
+    // drawRectARGB32(150,150,400,400,0x0000BB00,1); //GREEN
+    // drawRectARGB32(200,200,400,400,0x000000CC,1); //BLUE
+    // drawRectARGB32(250,250,400,400,0x00FFFF00,1); //YELLOW
+    // drawPixelARGB32(300, 300, 0x00FF0000); //RED
+    draw_image();
+    
 
 	uart_init();
     uart_puts("\033[31m");
@@ -607,7 +625,7 @@ void main(){
     uart_puts("\n");
     getUARTclockrate();
     uart_puts("\n");
-    SetPhyWHFrame();
+    // SetPhyWHFrame();
 
     uart_puts("\n"); 
     uart_puts("MyBareMetalOS> ");              
