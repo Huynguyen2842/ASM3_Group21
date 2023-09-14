@@ -58,10 +58,8 @@ void drawMap(const char *maze, int width, int height) {
          switch(maze[y * width + x]) {
          case 1:  draw_wall(x * 20, y * 20);  break;
          case 2:  draw_destination(x * 20,  y * 20);  break;
-         default: printf("  ");  break;
          }
       }
-      printf("\n");
    }
    for (int x = 0; x < width; x++) {
         draw_wall(x * 20, height * 20);
@@ -69,6 +67,7 @@ void drawMap(const char *maze, int width, int height) {
    for (int y = 0; y < height; y++) {
         draw_wall(width * 20, y * 20);
    }
+   draw_destination(20, 0);
 }
 
 
@@ -430,8 +429,6 @@ void play_game() {
         GenerateMaze(maze, width, height);
         ShowMaze(maze, width, height);
         drawMap(maze, width, height);
-        // draw_wall();
-        // draw_wall(500, 500);
     }
 }
 
