@@ -5,7 +5,8 @@
 #include "image.h"
 #include "video.h"
 #include "timer.h"
-
+#include "Maze.h"
+#include "gameElement.h"
 #define MAX_CMD_SIZE 100
 #define MAX_TOKENS 100
 #define HISTORY_SIZE 10
@@ -13,6 +14,27 @@
 char history[HISTORY_SIZE][MAX_CMD_SIZE];
 int history_count = 0;
 int current_history_index = 0;
+
+
+static unsigned char our_memory[1024 * 1024]; //reserve 1 MB for malloc
+static size_t next_index = 0;
+
+void *malloc(size_t sz)
+{
+    void *mem;
+
+    if(sizeof our_memory - next_index < sz)
+        return NULL;
+
+    mem = &our_memory[next_index];
+    next_index += sz;
+    return mem;
+}
+
+void free(void *mem)
+{
+   //we cheat, and don't free anything.
+}
 
 // Function draw image
 void draw_image()
@@ -29,6 +51,43 @@ void draw_image()
     }
 }
 
+void drawMap(const char *maze, int width, int height) {
+   int x, y;
+   for(y = 0; y < height; y++) {
+      for(x = 0; x < width; x++) {
+         switch(maze[y * width + x]) {
+         case 1:  draw_wall(x * 20, y * 20);  break;
+         case 2:  draw_destination(x * 20,  y * 20);  break;
+         default: printf("  ");  break;
+         }
+      }
+      printf("\n");
+   }
+   for (int x = 0; x < width; x++) {
+        draw_wall(x * 20, height * 20);
+   }
+   for (int y = 0; y < height; y++) {
+        draw_wall(width * 20, y * 20);
+   }
+}
+
+
+void draw_wall(int x, int y) {
+    for (int j = 0; j < 20; j++) {
+        for (int i = 0; i < 20; i++) {
+            drawPixelARGB32(i + x, j + y, epd_bitmap_wall[j*20 +i]);
+        }
+    }
+}
+
+void draw_destination(int x, int y) {
+    for (int j = 0; j < 20; j++) {
+        for (int i = 0; i < 21; i++) {
+            drawPixelARGB32(i + x, j + y, epd_bitmap_destination[j*21 +i]);
+        }
+    }
+}
+
 void draw_video() {
     for (int a = 0; a < epd_bitmap_allArray_LEN; a++) {
         for (int j = 0; j < 240; j++) {
@@ -41,7 +100,7 @@ void draw_video() {
 }
 
 const char *commands[] = {
-    "help", "clear", "setcolor", "showinfo"
+    "help", "clear", "setcolor", "showinfo", "video", "smallimg", "game"
     // Add more commands as needed
 };
 
@@ -358,6 +417,24 @@ void add_to_history(const char *cmd) {
     }
 }
 
+void play_game() {
+    int width = 40;
+    int height = 20;
+    char *maze;
+    
+    maze = (char*)malloc(width * height * sizeof(char));
+    if (maze == NULL) {
+        printf("Not enough memory, the game cant be generated!");
+    }
+    else {
+        GenerateMaze(maze, width, height);
+        ShowMaze(maze, width, height);
+        drawMap(maze, width, height);
+        // draw_wall();
+        // draw_wall(500, 500);
+    }
+}
+
 void cli()
 {
 	static char cli_buffer[MAX_CMD_SIZE];
@@ -405,7 +482,14 @@ void cli()
         } else if (strcmp(tokens[0], "clear") == 0) {
             // Handle clear command
             clear_command();
-        } else if (strcmp(tokens[0], "setcolor") == 0) {
+        } else if (strcmp(tokens[0], "video") == 0) {
+            draw_video();
+        } else if (strcmp(tokens[0], "smallimg") == 0) {
+            draw_image();
+        } else if (strcmp(tokens[0], "game") == 0) {
+            play_game();
+        }
+         else if (strcmp(tokens[0], "setcolor") == 0) {
             // Handle setcolor command
             if (numTokens == 1) {
             // Print usage information
@@ -544,9 +628,6 @@ void main(){
     // drawPixelARGB32(300, 300, 0x00FF0000); //RED
     // draw_image();
     
-    while (1) {
-        draw_video();
-    }
 
 	uart_init();
     uart_puts("\033[31m");
