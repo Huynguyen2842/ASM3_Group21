@@ -18,6 +18,10 @@ int current_history_index = 0;
 
 static unsigned char our_memory[1024 * 1024]; //reserve 1 MB for malloc
 static size_t next_index = 0;
+int inGame = 0;
+
+int x_direct = 20;
+int y_direct = 0;
 
 void *malloc(size_t sz)
 {
@@ -420,7 +424,6 @@ void play_game() {
     int width = 40;
     int height = 20;
     char *maze;
-    
     maze = (char*)malloc(width * height * sizeof(char));
     if (maze == NULL) {
         printf("Not enough memory, the game cant be generated!");
@@ -429,6 +432,7 @@ void play_game() {
         GenerateMaze(maze, width, height);
         ShowMaze(maze, width, height);
         drawMap(maze, width, height);
+        inGame = 1;
     }
 }
 
@@ -440,6 +444,21 @@ void cli()
 	//read and send back each char
 	char c = uart_getc();
 	uart_sendc(c);
+    // else {
+    //     if (c == 'w') {
+    //         y_direct -= 20;
+    //     }
+    //     else if (c == 'a') {
+    //         x_direct -= 20;
+    //     }
+    //     else if (c == 's') {
+    //         y_direct += 20;
+    //     }
+    //     else if (c == 'd') {
+    //         x_direct += 20;
+    //     }
+    //     draw_destination(x_direct, y_direct);
+    // }
 
 	//put into a buffer until got new line character
     if (c == 127){

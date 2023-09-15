@@ -10,6 +10,3 @@ void CarveMaze(char *maze, int width, int height, int x, int y);
 
 /* Generate maze in matrix maze with size width, height. */
 void GenerateMaze(char *maze, int width, int height);
-
-/* Solve the maze. */
-void SolveMaze(char *maze, int width, int height);

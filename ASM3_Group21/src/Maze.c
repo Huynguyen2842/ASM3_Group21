@@ -14,6 +14,26 @@ void ShowMaze(const char *maze, int width, int height) {
    }
 }
 
+static unsigned char our_memory[1024 * 1024]; //reserve 1 MB for malloc
+static size_t next_index = 0;
+
+void *selfmalloc(size_t sz)
+{
+    void *mem;
+
+    if(sizeof our_memory - next_index < sz)
+        return NULL;
+
+    mem = &our_memory[next_index];
+    next_index += sz;
+    return mem;
+}
+
+void selffree(void *mem)
+{
+   //we cheat, and don't free anything.
+}
+
 static uint32_t xorshift_state = 42; // You can initialize it with any non-zero value.
 
 // Function to generate a random 32-bit integer.
@@ -79,73 +99,124 @@ void CarveMaze(char *maze, int width, int height, int x, int y) {
 
 }
 
-/* Generate maze in matrix maze with size width, height. */
+// /* Generate maze in matrix maze with size width, height. */
+// void GenerateMaze(char *maze, int width, int height) {
+//    int x, y;
+//    /* Initialize the maze. */
+//    for(x = 0; x < width * height; x++) {
+//       maze[x] = 1;
+//    }
+//    maze[1 * width + 1] = 0;
+
+//    /* Carve the maze. */
+//    for(y = 1; y < height; y += 2) {
+//       for(x = 1; x < width; x += 2) {
+//          CarveMaze(maze, width, height, x, y);
+//       }
+//    }
+
+//    /* Set up the entry and exit. */
+//    maze[0 * width + 1] = 0;
+//    maze[(height - 1) * width + (width - 2)] = 2;
+
+// }
+
 void GenerateMaze(char *maze, int width, int height) {
-   int x, y;
-   /* Initialize the maze. */
-   for(x = 0; x < width * height; x++) {
+   int x,y, dir;
+   int frontier = 0;
+   int frontierParsed = 0;
+   int *xDirArrays = (int*)selfmalloc(width * height * sizeof(int));
+   int *yDirArrays = (int*)selfmalloc(width * height * sizeof(int));
+   for (x = 0; x < width * height; x++) {
       maze[x] = 1;
    }
-   maze[1 * width + 1] = 0;
 
-   /* Carve the maze. */
-   for(y = 1; y < height; y += 2) {
-      for(x = 1; x < width; x += 2) {
-         CarveMaze(maze, width, height, x, y);
-      }
+   int randomX = rand_range(0, width);
+   int randomY = rand_range(0, height);
+   x = randomX;
+   y = randomY;
+
+   maze[randomY * width + randomX] = 0;
+   // CHECK FOR NORTH FRONTIER
+   if (y *width + x - 2*width > 0) {
+      *(xDirArrays + frontier) = x;
+      *(yDirArrays + frontier) = y - 2;
+      frontier++;
    }
-
-   /* Set up the entry and exit. */
-   maze[0 * width + 1] = 0;
-   maze[(height - 1) * width + (width - 2)] = 2;
-
-}
-
-/* Solve the maze. */
-void SolveMaze(char *maze, int width, int height) {
-
-   int dir, count;
-   int x, y;
-   int dx, dy;
-   int forward;
-
-   /* Remove the entry and exit. */
-   maze[0 * width + 1] = 1;
-   maze[(height - 1) * width + (width - 2)] = 1;
-
-   forward = 1;
-   dir = 0;
-   count = 0;
-   x = 1;
-   y = 1;
-   while(x != width - 2 || y != height - 2) {
-      dx = 0; dy = 0;
-      switch(dir) {
-      case 0:  dx = 1;  break;
-      case 1:  dy = 1;  break;
-      case 2:  dx = -1; break;
-      default: dy = -1; break;
-      }
-      if(   (forward  && maze[(y + dy) * width + (x + dx)] == 0)
-         || (!forward && maze[(y + dy) * width + (x + dx)] == 2)) {
-         maze[y * width + x] = forward ? 2 : 3;
-         x += dx;
-         y += dy;
-         forward = 1;
-         count = 0;
-         dir = 0;
-      } else {
-         dir = (dir + 1) % 4;
-         count += 1;
-         if(count > 3) {
-            forward = 0;
-            count = 0;
+   //CHECK FOR EAST FRONTIER
+   if (y*width + x + 2 < (y + 1) * width){
+      *(xDirArrays + frontier) = x + 2;
+      *(yDirArrays + frontier) = y;
+      frontier++;
+   }
+   //CHECK FOR SOUTH FRONTIER
+   if (y* width + x + 2 *width < width * height) {
+      *(xDirArrays + frontier) = x;
+      *(yDirArrays + frontier) = y + 2;
+      frontier++;
+   }
+   //CHECK FOR WEST FRONTIER
+   if (y*width + x - 2 > y * width - 1) {
+      *(xDirArrays + frontier) = x - 2;
+      *(yDirArrays + frontier) = y;
+      frontier++;
+   }
+   for (int i = 0; i < 199; i++) {
+   while (1) {
+         dir = rand_range(0, frontier - 1);
+         if (   maze[*(yDirArrays + dir)*width + *(xDirArrays + dir)] == 0) {
+            continue;
          }
+         maze[*(yDirArrays + dir)*width + *(xDirArrays + dir)] = 0;
+         frontierParsed++;
+         break;
+      }
+      // CASE FRONTIER WAS TOP
+      if (maze[(*(yDirArrays + dir) + 2)*width + *(xDirArrays + dir)] == 0 && (*(yDirArrays + dir))*width + *(xDirArrays + dir) > 0 && (*(yDirArrays + dir) + 2)*width + *(xDirArrays + dir) < width * height) {
+         maze[(*(yDirArrays + dir) + 1)*width + *(xDirArrays + dir)] = 0;
+      }
+      // CASE FRONTIER WAS EAST
+      else if (maze[*(yDirArrays + dir)*width + *(xDirArrays + dir) - 2] == 0 && (*(yDirArrays + dir)*width + *(xDirArrays + dir)) < (*(yDirArrays + dir)*width + width) && (*(yDirArrays + dir)*width + *(xDirArrays + dir) - 2) >= (*(yDirArrays + dir)*width)) {
+         maze[*(yDirArrays + dir)*width + *(xDirArrays + dir) - 1] = 0;
+      }
+      // CASE FRONTIER WAS SOUTH
+      else if (maze[(*(yDirArrays + dir) - 2)*width + *(xDirArrays + dir)] == 0 && (*(yDirArrays + dir))*width + *(xDirArrays + dir) < width * height && (*(yDirArrays + dir) - 2)*width + *(xDirArrays + dir) > 0) {
+         maze[(*(yDirArrays + dir) - 1)*width + *(xDirArrays + dir)] = 0;
+      }
+      else if (maze[*(yDirArrays + dir)*width + *(xDirArrays + dir) + 2] == 0 && (*(yDirArrays + dir)*width + *(xDirArrays + dir)) >(*(yDirArrays + dir)*width) - 1) {
+         maze[*(yDirArrays + dir)*width + *(xDirArrays + dir) + 1] = 0;
+      }
+      x = *(xDirArrays + dir);
+      y = *(yDirArrays + dir);
+      // CHECK FOR NORTH FRONTIER
+      if (y *width + x - 2*width > 0 && maze[y *width + x - 2*width] != 0) {
+         *(xDirArrays + frontier) = x;
+         *(yDirArrays + frontier) = y - 2;
+         frontier++;
+      }
+      //CHECK FOR EAST FRONTIER
+      if (y*width + x + 2 < (y + 1) * width && maze[y*width + x + 2] != 0){
+         *(xDirArrays + frontier) = x + 2;
+         *(yDirArrays + frontier) = y;
+         frontier++;
+      }
+      //CHECK FOR SOUTH FRONTIER
+      if (y* width + x + 2 *width < width * height && maze[y* width + x + 2 *width] != 0) {
+         *(xDirArrays + frontier) = x;
+         *(yDirArrays + frontier) = y + 2;
+         frontier++;
+      }
+      //CHECK FOR WEST FRONTIER
+      if (y*width + x - 2 > y * width - 1 && maze[y*width + x - 2] != 0) {
+         *(xDirArrays + frontier) = x - 2;
+         *(yDirArrays + frontier) = y;
+         frontier++;
       }
    }
 
-   /* Replace the entry and exit. */
-   maze[(height - 2) * width + (width - 2)] = 2;
-   maze[(height - 1) * width + (width - 2)] = 2;
 
+   printf("This is amount of frontier: %d\n", frontier - frontierParsed);
+   // for (int i = 0; i < frontier; i++) {
+   //    maze[*(yDirArrays + i)*width + *(xDirArrays + i)] = 0;
+   // }
 }

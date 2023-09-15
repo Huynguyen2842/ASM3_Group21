@@ -3,7 +3,7 @@ CFILES = $(wildcard ./src/*.c)
 OFILES = $(CFILES:./src/%.c=./object/%.o)
 GCCFLAGS = -Wall -O2 -ffreestanding -nostdinc -nostdlib
 
-all: uart_build kernel8.img run
+all: clean uart_build kernel8.img run
 
 uart_build: ./uart/uart.c 
 	aarch64-none-elf-gcc $(GCCFLAGS) -c ./uart/uart.c -o ./object/uart.o
