@@ -541,51 +541,51 @@ void cli()
 	//read and send back each char
 	char c = uart_getc();
 
-    if (inGame == 1) {
-        if (c == 'w') {
-            if (checkDirection(3) == 1) {
-            clear_frame(20, 21);
-            y_direct -= 20;
-            }
-            if (checkDirection(3) == 2) {
-                GameGenerator();
-                return;
-            }
-        }
-        else if (c == 'a') {
-            if (checkDirection(6) == 1) {
-            clear_frame(20, 21);
-            x_direct -= 20;
-            }
-            if (checkDirection(6) == 2) {
-                GameGenerator();
-                return;
-            }
-        }
-        else if (c == 's') {
-            if (checkDirection(5) == 1) {
-            clear_frame(20, 21);
-            y_direct += 20;
-            }
-            if (checkDirection(5) == 2) {
-                GameGenerator();
-                return;
-            }
-        }
-        else if (c == 'd') {
-            if (checkDirection(4) == 1) {
-            clear_frame(20, 21);
-            x_direct += 20;
-            }
-            if (checkDirection(4) == 2) {
-                GameGenerator();
-                return;
-            }
-        }
-        getNearFrontier(maze, x_direct / 20, y_direct / 20);
-        draw_destination(x_direct, y_direct);
-        return;
-    }
+    // if (inGame == 1) {
+    //     if (c == 'w') {
+    //         if (checkDirection(3) == 1) {
+    //         clear_frame(20, 21);
+    //         y_direct -= 20;
+    //         }
+    //         if (checkDirection(3) == 2) {
+    //             GameGenerator();
+    //             return;
+    //         }
+    //     }
+    //     else if (c == 'a') {
+    //         if (checkDirection(6) == 1) {
+    //         clear_frame(20, 21);
+    //         x_direct -= 20;
+    //         }
+    //         if (checkDirection(6) == 2) {
+    //             GameGenerator();
+    //             return;
+    //         }
+    //     }
+    //     else if (c == 's') {
+    //         if (checkDirection(5) == 1) {
+    //         clear_frame(20, 21);
+    //         y_direct += 20;
+    //         }
+    //         if (checkDirection(5) == 2) {
+    //             GameGenerator();
+    //             return;
+    //         }
+    //     }
+    //     else if (c == 'd') {
+    //         if (checkDirection(4) == 1) {
+    //         clear_frame(20, 21);
+    //         x_direct += 20;
+    //         }
+    //         if (checkDirection(4) == 2) {
+    //             GameGenerator();
+    //             return;
+    //         }
+    //     }
+    //     getNearFrontier(maze, x_direct / 20, y_direct / 20);
+    //     draw_destination(x_direct, y_direct);
+    //     return;
+    // }
 	uart_sendc(c);
 
 
