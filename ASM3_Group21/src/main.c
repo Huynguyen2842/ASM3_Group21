@@ -89,20 +89,32 @@ int checkDirection(int dir) {
         if (myFrontier->north == 0) {
             return 1;
         }
+        if (myFrontier->north == 2) {
+            return 2;
+        }
         break;
     case 4:
         if (myFrontier->east == 0) {
             return 1;
+        }
+        if (myFrontier->east == 2) {
+            return 2;
         }
         break;
     case 5:
         if (myFrontier->south == 0) {
             return 1;
         }
+        if (myFrontier->south == 2) {
+            return 2;
+        }
         break;
     case 6:
         if (myFrontier->west == 0) {
             return 1;
+        }
+        if (myFrontier->west == 2) {
+            return 2;
         }
         break;
     default:
@@ -128,7 +140,7 @@ void drawMap(const char *maze, int widthScreen, int heightScreen) {
         draw_wall(widthScreen * 20, y * 20);
    }
    while (1) {
-    int var = rand_range(0, widthScreen * heightScreen);
+    int var = rand_range(0, widthScreen * heightScreen / 2);
     if (maze[var] == 0) {
         int y_index = var / widthScreen;
         int x_index = var % widthScreen;
@@ -490,11 +502,15 @@ void add_to_history(const char *cmd) {
 }
 
 void play_game() {
+    GameGenerator();
+}
+void GameGenerator() {
     maze = (char*)malloc(widthScreen * heightScreen * sizeof(char));
     if (maze == NULL) {
         printf("Not enough memory, the game cant be generated!");
     }
     else {
+        clearGame(widthScreen, heightScreen);
         GenerateMaze(maze, widthScreen, heightScreen);
         ShowMaze(maze, widthScreen, heightScreen);
         drawMap(maze, widthScreen, heightScreen);
@@ -506,6 +522,14 @@ void clear_frame(int heightScreen, int widthScreen) {
     for (int j = 0; j < heightScreen; j++) {
         for (int i = 0; i < widthScreen; i++){
             drawPixelARGB32(i + x_direct,j + y_direct, 0x00000000);
+        }
+    }
+}
+
+void clearGame(int widthScreen, int heightScreen) {
+    for (int j = 0; j < heightScreen * 20; j++) {
+        for (int i = 0; i < widthScreen * 20; i++){
+            drawPixelARGB32(i ,j, 0x00000000);
         }
     }
 }
@@ -523,11 +547,19 @@ void cli()
             clear_frame(20, 21);
             y_direct -= 20;
             }
+            if (checkDirection(3) == 2) {
+                GameGenerator();
+                return;
+            }
         }
         else if (c == 'a') {
             if (checkDirection(6) == 1) {
             clear_frame(20, 21);
             x_direct -= 20;
+            }
+            if (checkDirection(6) == 2) {
+                GameGenerator();
+                return;
             }
         }
         else if (c == 's') {
@@ -535,11 +567,19 @@ void cli()
             clear_frame(20, 21);
             y_direct += 20;
             }
+            if (checkDirection(5) == 2) {
+                GameGenerator();
+                return;
+            }
         }
         else if (c == 'd') {
             if (checkDirection(4) == 1) {
             clear_frame(20, 21);
             x_direct += 20;
+            }
+            if (checkDirection(4) == 2) {
+                GameGenerator();
+                return;
             }
         }
         getNearFrontier(maze, x_direct / 20, y_direct / 20);

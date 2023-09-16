@@ -191,14 +191,6 @@ void GenerateMaze(char *maze, int width, int height) {
          frontier++;
       }
    }
-
-   // while (1) {
-   //       dir = rand_range(0, frontier - 1);
-   //       if (   maze[*(yDirArrays + dir)*width + *(xDirArrays + dir)] == 0) {
-   //          maze[*(yDirArrays + dir)*width + *(xDirArrays + dir)] = 2;
-   //          break;
-   //       }
-   //    }
    while (1) {
       dir = rand_range(0, width * height);
       if (   maze[dir] == 0) {
