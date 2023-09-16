@@ -3,7 +3,7 @@ CFILES = $(wildcard ./src/*.c)
 OFILES = $(CFILES:./src/%.c=./object/%.o)
 GCCFLAGS = -Wall -O2 -ffreestanding -nostdinc -nostdlib
 
-all: uart_build kernel8.img run
+all: clean uart_build kernel8.img run
 
 uart_build: ./uart/uart.c 
 	aarch64-none-elf-gcc $(GCCFLAGS) -c ./uart/uart.c -o ./object/uart.o
@@ -19,7 +19,7 @@ kernel8.img: ./object/boot.o ./object/uart.o $(OFILES)
 	aarch64-none-elf-objcopy -O binary ./object/kernel8.elf kernel8.img
 
 clean:
-	rm -f .\src\kernel8.elf .\object\*.o *.img
+	del -f .\src\kernel8.elf .\object\*.o *.img
 
 run:
-	qemu-system-aarch64 -M raspi3b -kernel kernel8.img -serial null -serial stdio
+	qemu-system-aarch64 -M raspi3 -kernel kernel8.img -serial null -serial stdio
