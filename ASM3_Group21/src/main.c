@@ -7,21 +7,25 @@
 #include "timer.h"
 #include "Maze.h"
 #include "gameElement.h"
+#include "Frontier.c"
 #define MAX_CMD_SIZE 100
 #define MAX_TOKENS 100
 #define HISTORY_SIZE 10
 #define MAX_REQ_VALUE 10
+int widthScreen = 40;
+int heightScreen = 20;
 char history[HISTORY_SIZE][MAX_CMD_SIZE];
 int history_count = 0;
 int current_history_index = 0;
-
-
+char *maze;
 static unsigned char our_memory[1024 * 1024]; //reserve 1 MB for malloc
 static size_t next_index = 0;
 int inGame = 0;
+Frontier *myFrontier;
 
 int x_direct = 20;
 int y_direct = 0;
+
 
 void *malloc(size_t sz)
 {
@@ -55,23 +59,88 @@ void draw_image()
     }
 }
 
-void drawMap(const char *maze, int width, int height) {
+void getNearFrontier(const char *maze, int x, int y) {
+    if (y * widthScreen + x - widthScreen < 0) {
+        myFrontier->north = 10;
+    }
+    else {    myFrontier->north = maze[y * widthScreen + x - widthScreen];
+    }
+    if (y * widthScreen + x + 1 > ((y + 1) * widthScreen)) {
+        myFrontier->east = 10;
+    }
+    else {    myFrontier->east = maze[y * widthScreen + x + 1];
+    }
+    if (y*widthScreen + x + widthScreen > widthScreen * heightScreen) {
+        myFrontier->south = 10;
+    }
+    else {    myFrontier->south = maze[y*widthScreen + x + widthScreen];
+    }
+    if (y * widthScreen + x - 1 < y * widthScreen) {
+        myFrontier->west = 10;
+    }
+    else {    myFrontier->west = maze[y * widthScreen + x - 1];
+    }
+}
+
+int checkDirection(int dir) {
+    switch (dir)
+    {
+    case 3:
+        if (myFrontier->north == 0) {
+            return 1;
+        }
+        break;
+    case 4:
+        if (myFrontier->east == 0) {
+            return 1;
+        }
+        break;
+    case 5:
+        if (myFrontier->south == 0) {
+            return 1;
+        }
+        break;
+    case 6:
+        if (myFrontier->west == 0) {
+            return 1;
+        }
+        break;
+    default:
+        break;
+    }
+    return 0;
+}
+
+void drawMap(const char *maze, int widthScreen, int heightScreen) {
    int x, y;
-   for(y = 0; y < height; y++) {
-      for(x = 0; x < width; x++) {
-         switch(maze[y * width + x]) {
+   for(y = 0; y < heightScreen; y++) {
+      for(x = 0; x < widthScreen; x++) {
+         switch(maze[y * widthScreen + x]) {
          case 1:  draw_wall(x * 20, y * 20);  break;
          case 2:  draw_destination(x * 20,  y * 20);  break;
          }
       }
    }
-   for (int x = 0; x < width; x++) {
-        draw_wall(x * 20, height * 20);
+   for (int x = 0; x < widthScreen; x++) {
+        draw_wall(x * 20, heightScreen * 20);
    }
-   for (int y = 0; y < height; y++) {
-        draw_wall(width * 20, y * 20);
+   for (int y = 0; y < heightScreen; y++) {
+        draw_wall(widthScreen * 20, y * 20);
    }
-   draw_destination(20, 0);
+   while (1) {
+    int var = rand_range(0, widthScreen * heightScreen);
+    if (maze[var] == 0) {
+        int y_index = var / widthScreen;
+        int x_index = var % widthScreen;
+        printf("This is x_index: %d\n", x_index);
+        printf("This is y_index: %d\n", y_index);
+        draw_destination(x_index * 20, y_index * 20);
+        x_direct = x_index * 20;
+        y_direct = y_index * 20;
+        getNearFrontier(maze, x_index, y_index);
+        break;
+    }
+   }
 }
 
 
@@ -421,21 +490,25 @@ void add_to_history(const char *cmd) {
 }
 
 void play_game() {
-    int width = 40;
-    int height = 20;
-    char *maze;
-    maze = (char*)malloc(width * height * sizeof(char));
+    maze = (char*)malloc(widthScreen * heightScreen * sizeof(char));
     if (maze == NULL) {
         printf("Not enough memory, the game cant be generated!");
     }
     else {
-        GenerateMaze(maze, width, height);
-        ShowMaze(maze, width, height);
-        drawMap(maze, width, height);
+        GenerateMaze(maze, widthScreen, heightScreen);
+        ShowMaze(maze, widthScreen, heightScreen);
+        drawMap(maze, widthScreen, heightScreen);
         inGame = 1;
     }
 }
 
+void clear_frame(int heightScreen, int widthScreen) {
+    for (int j = 0; j < heightScreen; j++) {
+        for (int i = 0; i < widthScreen; i++){
+            drawPixelARGB32(i + x_direct,j + y_direct, 0x00000000);
+        }
+    }
+}
 void cli()
 {
 	static char cli_buffer[MAX_CMD_SIZE];
@@ -443,22 +516,38 @@ void cli()
 
 	//read and send back each char
 	char c = uart_getc();
+
+    if (inGame == 1) {
+        if (c == 'w') {
+            if (checkDirection(3) == 1) {
+            clear_frame(20, 21);
+            y_direct -= 20;
+            }
+        }
+        else if (c == 'a') {
+            if (checkDirection(6) == 1) {
+            clear_frame(20, 21);
+            x_direct -= 20;
+            }
+        }
+        else if (c == 's') {
+            if (checkDirection(5) == 1) {
+            clear_frame(20, 21);
+            y_direct += 20;
+            }
+        }
+        else if (c == 'd') {
+            if (checkDirection(4) == 1) {
+            clear_frame(20, 21);
+            x_direct += 20;
+            }
+        }
+        getNearFrontier(maze, x_direct / 20, y_direct / 20);
+        draw_destination(x_direct, y_direct);
+        return;
+    }
 	uart_sendc(c);
-    // else {
-    //     if (c == 'w') {
-    //         y_direct -= 20;
-    //     }
-    //     else if (c == 'a') {
-    //         x_direct -= 20;
-    //     }
-    //     else if (c == 's') {
-    //         y_direct += 20;
-    //     }
-    //     else if (c == 'd') {
-    //         x_direct += 20;
-    //     }
-    //     draw_destination(x_direct, y_direct);
-    // }
+
 
 	//put into a buffer until got new line character
     if (c == 127){
@@ -627,9 +716,9 @@ void getARMclockrate(){
 //     unsigned int *physize = 0; // Pointer to response data
 //     mbox_buffer_setup(ADDR(mBuf), MBOX_TAG_SETPHYWH, &physize, 8, 8, 1024, 768);
 //     mbox_call(ADDR(mBuf), MBOX_CH_PROP);
-//     uart_puts("Got Actual Physical Width: ");
+//     uart_puts("Got Actual Physical widthScreen: ");
 //     uart_dec(physize[0]); 
-//     uart_puts("\nGot Actual Physical Height: ");
+//     uart_puts("\nGot Actual Physical heightScreen: ");
 //     uart_dec(physize[1]);
 //     uart_puts("\n");
 // }
@@ -684,8 +773,8 @@ void main(){
     printf("Preceding Negative Number with blanks               :%10d\n", nev_num);
     printf("Negative Number with 0Flag                          :%010d\n", nev_num);
     printf("Positive Number with 0Flag                          :%010d\n", num);
-    printf("Positive Number with Width                          :%*d\n", 10, num);
-    printf("Negative Number with Width                          :%*d\n", 10, nev_num);
+    printf("Positive Number with widthScreen                          :%*d\n", 10, num);
+    printf("Negative Number with widthScreen                          :%*d\n", 10, nev_num);
     printf("Integer Value with padding size .*                  : %.*d\n", 5, num);
     uart_puts("\033[32m");
     printf("///////////////////////////////////////////////////////////////////////////////////////////");
@@ -695,22 +784,22 @@ void main(){
     printf("Positive Float Number                               :%f\n", float_num);
     printf("Negative Float Number:                              :%f\n", nev_float);
     printf("Float with Precision                                :%.3f\n", float_num);
-    printf("Width and Precision test                            :%15.4f\n", 123.45678);
-    printf("Width and Precision test                            :%015f\n", 3.12);
-    printf("Width and Precision test with padding:              :%010.2f\n", 123.45678);
+    printf("widthScreen and Precision test                            :%15.4f\n", 123.45678);
+    printf("widthScreen and Precision test                            :%015f\n", 3.12);
+    printf("widthScreen and Precision test with padding:              :%010.2f\n", 123.45678);
     uart_puts("\033[33m");
     printf("///////////////////////////////////////////////////////////////////////////////////////////");
     printf("\n////////////////   TEST     ALL     CASES     FOR     STRING     AND     CHARACTER   //////\n");
     printf("///////////////////////////////////////////////////////////////////////////////////////////\n");
     uart_puts("\033[37m");
     printf("Character                                           :%c\n", ch);
-    printf("Character with width                                :<%15c>\n", ch);
+    printf("Character with widthScreen                                :<%15c>\n", ch);
     printf("Character Value with .*                             :%.*c\n", 0, ch);
-    printf("Character with Width and NO 0 FLAG includes size .* :<%*c>\n", 15, 'a');
+    printf("Character with widthScreen and NO 0 FLAG includes size .* :<%*c>\n", 15, 'a');
     printf("String                                              :%s\n", str);
     printf("Widtd With String and NO 0 FLAG                     :<%15s>\n", "Embedded");
-    printf("Width With String and NO 0 FLAG includes size .*    :<%*s>\n", 15, "Embedded");
-    printf("Width Display With String and 0 FLAG                :<%015s>\n", "Embedded");
+    printf("widthScreen With String and NO 0 FLAG includes size .*    :<%*s>\n", 15, "Embedded");
+    printf("widthScreen Display With String and 0 FLAG                :<%015s>\n", "Embedded");
     uart_puts("\033[34m");
     printf("///////////////////////////////////////////////////////////////////////////////////////////");
     printf("\n/////////////////  TEST     ALL     CASES     FOR     HEXADECIMAL    //////////////////////\n");

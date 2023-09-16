@@ -99,28 +99,6 @@ void CarveMaze(char *maze, int width, int height, int x, int y) {
 
 }
 
-// /* Generate maze in matrix maze with size width, height. */
-// void GenerateMaze(char *maze, int width, int height) {
-//    int x, y;
-//    /* Initialize the maze. */
-//    for(x = 0; x < width * height; x++) {
-//       maze[x] = 1;
-//    }
-//    maze[1 * width + 1] = 0;
-
-//    /* Carve the maze. */
-//    for(y = 1; y < height; y += 2) {
-//       for(x = 1; x < width; x += 2) {
-//          CarveMaze(maze, width, height, x, y);
-//       }
-//    }
-
-//    /* Set up the entry and exit. */
-//    maze[0 * width + 1] = 0;
-//    maze[(height - 1) * width + (width - 2)] = 2;
-
-// }
-
 void GenerateMaze(char *maze, int width, int height) {
    int x,y, dir;
    int frontier = 0;
@@ -214,6 +192,20 @@ void GenerateMaze(char *maze, int width, int height) {
       }
    }
 
+   // while (1) {
+   //       dir = rand_range(0, frontier - 1);
+   //       if (   maze[*(yDirArrays + dir)*width + *(xDirArrays + dir)] == 0) {
+   //          maze[*(yDirArrays + dir)*width + *(xDirArrays + dir)] = 2;
+   //          break;
+   //       }
+   //    }
+   while (1) {
+      dir = rand_range(0, width * height);
+      if (   maze[dir] == 0) {
+         maze[dir] = 2;
+         break;
+      }
+   }
 
    printf("This is amount of frontier: %d\n", frontier - frontierParsed);
    // for (int i = 0; i < frontier; i++) {
